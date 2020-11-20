@@ -1,5 +1,7 @@
 package ULScene.service;
 
+import ULScene.dto.LoginRequest;
+import ULScene.dto.LoginResponse;
 import ULScene.dto.RegisterRequest;
 import ULScene.exceptions.ULSceneException;
 import ULScene.model.NotificationEmail;
@@ -8,9 +10,19 @@ import ULScene.model.VerificationToken;
 import ULScene.respository.UserRepository;
 import ULScene.respository.VerificationTokenRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -62,5 +74,12 @@ public class AuthService {
         verificationToken.setToken(token);
         verificationTokenRepository.save(verificationToken);
         return token;
+    }
+    @Transactional(readOnly = true)
+    public User getCurrentUser() {
+        org.springframework.security.core.userdetails.User principal = (org.springframework.security.core.userdetails.User) SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal();
+        return userRepository.findByUsername(principal.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("User name not found - " + principal.getUsername()));
     }
 }
