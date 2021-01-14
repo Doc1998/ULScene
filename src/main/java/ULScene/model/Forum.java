@@ -28,6 +28,9 @@ public class Forum {
     private String description;
     @OneToMany(fetch = LAZY)
     private List<Post> posts;
+    @ManyToMany(fetch = LAZY)
+    @Column(name = "members")
+    private List<User> users;
     private Instant createdDate;
     @ManyToOne(fetch = LAZY)
     private User user;

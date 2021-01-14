@@ -2,12 +2,14 @@ package ULScene.controller;
 
 import ULScene.dto.LoginRequest;
 import ULScene.dto.LoginResponse;
+import ULScene.dto.RefreshTokenRequest;
 import ULScene.dto.RegisterRequest;
 import ULScene.exceptions.ULSceneException;
 import ULScene.model.User;
 import ULScene.respository.UserRepository;
 import ULScene.security.JwtProvider;
 import ULScene.service.AuthService;
+import ULScene.service.RefreshTokenService;
 import ULScene.service.UserDetailsServiceImpl;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.Instant;
 
 @RestController
@@ -35,29 +38,30 @@ public class AuthController {
     private JwtProvider jwtTokenUtil;
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
+    private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody RegisterRequest registerRequest){
         if(!registerRequest.getEmail().contains("@studentmail.ul.ie")){
-            return new ResponseEntity<>("You must register with a UL student email!", HttpStatus.OK);
+            return new ResponseEntity<>("You must register with a UL student email!", HttpStatus.BAD_REQUEST);
         }else  if(userRepository.existsByEmail(registerRequest.getEmail()) && !userRepository.existsByUsername(registerRequest.getUsername())){
             User foundUser = userRepository.findByEmail(registerRequest.getEmail()).orElseThrow(() -> new ULSceneException("User not found with name" + registerRequest.getUsername()));
             if(foundUser.isEnabled() == false) {
                 authService.signup(registerRequest);
                 return new ResponseEntity<>("User has been Registered in the system", HttpStatus.CREATED);
             }else{
-                return new ResponseEntity<>("Username or email already exists", HttpStatus.OK);
+                return new ResponseEntity<>("Username or email already exists", HttpStatus.BAD_REQUEST);
             }
 
         }
         else if(!userRepository.existsByEmail(registerRequest.getEmail()) && userRepository.existsByUsername(registerRequest.getUsername())){
-                return new ResponseEntity<>("Username already exists", HttpStatus.OK);
+                return new ResponseEntity<>("Username already exists", HttpStatus.BAD_REQUEST);
             }
 
 
         else if(userRepository.existsByEmail(registerRequest.getEmail()) && userRepository.existsByUsername(registerRequest.getUsername())){
 
-                return new ResponseEntity<>("Username or email already exists", HttpStatus.OK);
+                return new ResponseEntity<>("Username or email already exists", HttpStatus.BAD_REQUEST);
         }
 
 
@@ -65,7 +69,7 @@ public class AuthController {
             authService.signup(registerRequest);
             return new ResponseEntity<>("User has been Registered in the system", HttpStatus.CREATED);
         }else {
-            return new ResponseEntity<>("Username or email already exists", HttpStatus.OK);
+            return new ResponseEntity<>("Username or email already exists", HttpStatus.BAD_REQUEST);
         }
 
         /*
@@ -98,11 +102,26 @@ public class AuthController {
                 .jwt(jwt)
                 .username(authenticationRequest.getUsername())
                 .expiresAt(Instant.now().plusMillis(jwtTokenUtil.getJwtExpirationinMillis()))
+                .refreshToken(refreshTokenService.generateRefreshToken().getToken())
                 .build();
         //.refreshToken(refreshTokenService.generateRefreshToken().getToken())
     }
-
+    @GetMapping("/currentUser")
+    public ResponseEntity<User> getCurrentUser(){
+        return ResponseEntity.ok(authService.getCurrentUser());
     }
+    @PostMapping("/refresh/token")
+    public LoginResponse refreshTokens(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
+        return authService.refreshToken(refreshTokenRequest);
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest){
+        refreshTokenService.deleteRefreshToken(refreshTokenRequest.getRefreshToken());
+        return ResponseEntity.status(HttpStatus.OK).body("Refresh token deleted successfully");
+    }
+
+
+}
 
 
 

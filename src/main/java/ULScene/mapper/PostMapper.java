@@ -2,9 +2,7 @@ package ULScene.mapper;
 
 import ULScene.dto.PostRequest;
 import ULScene.dto.PostResponse;
-import ULScene.model.Forum;
-import ULScene.model.Post;
-import ULScene.model.User;
+import ULScene.model.*;
 import ULScene.respository.CommentRepository;
 import ULScene.respository.VoteRepository;
 import ULScene.service.AuthService;
@@ -12,6 +10,12 @@ import com.github.marlonlom.utilities.timeago.TimeAgo;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
+
+import java.util.Optional;
+
+import static ULScene.model.VoteType.DOWNVOTE;
+import static ULScene.model.VoteType.UPVOTE;
 
 @Mapper(componentModel = "spring")
 public abstract class PostMapper {
@@ -43,5 +47,20 @@ public abstract class PostMapper {
 
     String getDuration(Post post) {
         return TimeAgo.using(post.getCreatedDate().toEpochMilli());
+    }
+
+    boolean isPostUpVoted(Post post){
+      return checkVoteType(post,UPVOTE);
+    }
+    boolean isPostDownVoted(Post post){
+        return checkVoteType(post,DOWNVOTE);
+    }
+    private boolean checkVoteType(Post post, VoteType voteType){
+        if(authService.isLoggedIn()){
+            Optional<Vote> voteForPostByUser =
+                    voteRepository.findTopByPostAndUserOrderByVoteIdDesc(post, authService.getCurrentUser());
+            return voteForPostByUser.filter(vote -> vote.getVoteType().equals(voteType)).isPresent();
+        }
+        return false;
     }
 }

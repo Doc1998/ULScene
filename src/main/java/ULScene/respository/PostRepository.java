@@ -13,4 +13,5 @@ import java.util.Optional;
 public interface PostRepository extends JpaRepository<Post,Long> {
     List<Post> findAllByForum (Forum forum);
     List<Post> findAllByUser  (User user);
+    void  deleteByForum (Forum forum);
 }

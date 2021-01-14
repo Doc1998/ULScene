@@ -2,6 +2,7 @@ package ULScene.service;
 
 import ULScene.dto.LoginRequest;
 import ULScene.dto.LoginResponse;
+import ULScene.dto.RefreshTokenRequest;
 import ULScene.dto.RegisterRequest;
 import ULScene.exceptions.ULSceneException;
 import ULScene.model.NotificationEmail;
@@ -9,8 +10,10 @@ import ULScene.model.User;
 import ULScene.model.VerificationToken;
 import ULScene.respository.UserRepository;
 import ULScene.respository.VerificationTokenRepository;
+import ULScene.security.JwtProvider;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,14 +37,16 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final MailService mailService;
+    private final JwtProvider jwtProvider;
     private final VerificationTokenRepository verificationTokenRepository;
+    private final RefreshTokenService refreshTokenService;
 
 
     public void signup(RegisterRequest registerRequest) {
         User user = new User();
         user.setUsername(registerRequest.getUsername());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setEmail(registerRequest.getEmail());
+        user.setEmail (registerRequest.getEmail());
         user.setCreateDate(Instant.now());
         user.setEnabled(false);
 
@@ -81,5 +86,19 @@ public class AuthService {
                 getContext().getAuthentication().getPrincipal();
         return userRepository.findByUsername(principal.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User name not found - " + principal.getUsername()));
+    }
+    public LoginResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
+        refreshTokenService.validateRefreshToken(refreshTokenRequest.getRefreshToken());
+        String token = jwtProvider.createTokenWithUsername(refreshTokenRequest.getUsername());
+        return LoginResponse.builder()
+                .jwt(token)
+                .username(refreshTokenRequest.getUsername())
+                .expiresAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationinMillis()))
+                .refreshToken(refreshTokenRequest.getRefreshToken())
+                .build();
+    }
+    public boolean isLoggedIn() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return !(authentication instanceof AnonymousAuthenticationToken) && authentication.isAuthenticated();
     }
 }
