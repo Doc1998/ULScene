@@ -1,5 +1,6 @@
 package ULScene.respository;
 
+import ULScene.model.Comment;
 import ULScene.model.Post;
 import ULScene.model.User;
 import ULScene.model.Vote;
@@ -11,4 +12,5 @@ import java.util.Optional;
 @Repository
 public interface VoteRepository extends JpaRepository<Vote,Long> {
     Optional<Vote> findTopByPostAndUserOrderByVoteIdDesc(Post post, User currentUser);
+    Optional<Vote> findTopByCommentAndUserOrderByVoteIdDesc(Comment comment, User currentUser);
 }

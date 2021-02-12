@@ -29,9 +29,12 @@ public class Forum {
     @OneToMany(fetch = LAZY)
     private List<Post> posts;
     @ManyToMany(fetch = LAZY)
+    private List<User> moderators;
+    @ManyToMany(fetch = LAZY)
     @Column(name = "members")
     private List<User> users;
     private Instant createdDate;
     @ManyToOne(fetch = LAZY)
     private User user;
+    boolean isPrivate;
 }

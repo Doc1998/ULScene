@@ -42,6 +42,9 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody RegisterRequest registerRequest){
+        if(registerRequest.getPassword().length() < 6){
+            return new ResponseEntity<>("Password too short", HttpStatus.BAD_REQUEST);
+        }
         if(!registerRequest.getEmail().contains("@studentmail.ul.ie")){
             return new ResponseEntity<>("You must register with a UL student email!", HttpStatus.BAD_REQUEST);
         }else  if(userRepository.existsByEmail(registerRequest.getEmail()) && !userRepository.existsByUsername(registerRequest.getUsername())){
@@ -55,7 +58,7 @@ public class AuthController {
 
         }
         else if(!userRepository.existsByEmail(registerRequest.getEmail()) && userRepository.existsByUsername(registerRequest.getUsername())){
-                return new ResponseEntity<>("Username already exists", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("Username already exists", HttpStatus.NOT_ACCEPTABLE);
             }
 
 
@@ -119,6 +122,7 @@ public class AuthController {
         refreshTokenService.deleteRefreshToken(refreshTokenRequest.getRefreshToken());
         return ResponseEntity.status(HttpStatus.OK).body("Refresh token deleted successfully");
     }
+
 
 
 }

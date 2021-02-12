@@ -39,6 +39,8 @@ public abstract class PostMapper {
     @Mapping(target = "userName", source = "user.username")
     @Mapping(target = "commentCount", expression = "java(commentCount(post))")
     @Mapping(target = "duration", expression = "java(getDuration(post))")
+    @Mapping(target = "upVote",expression = "java(isPostUpVoted(post))")
+    @Mapping(target = "downVote" ,expression = "java(isPostDownVoted(post))")
     public abstract PostResponse mapToDto(Post post);
 
     Integer commentCount(Post post) {

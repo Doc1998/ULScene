@@ -25,7 +25,7 @@ public class PostController {
     public ResponseEntity <List<PostResponse>> getAllPosts(){
        return ResponseEntity.ok(postService.getAllPosts());
     }
-    @GetMapping("/{postId}")
+    @GetMapping("/id/{postId}")
     public ResponseEntity<PostResponse> getPostbyId(@PathVariable Long postId){
         return  ResponseEntity.ok(postService.getPost(postId));
     }
@@ -34,7 +34,11 @@ public class PostController {
     public ResponseEntity <List<PostResponse>> getAllPostsByUserId(@PathVariable Long userId){
         return ResponseEntity.ok(postService.getAllPostsByUserId(userId));
     }
-    @GetMapping("/{username}")
+    @GetMapping("/currentUser")
+    public ResponseEntity <List<PostResponse>> getAllPostsByCurrentUser(){
+        return ResponseEntity.ok(postService.getAllPostsByCurrentUser());
+    }
+    @GetMapping("/by-user/{username}")
     public ResponseEntity <List<PostResponse>> getAllPostsByUsername(@PathVariable String username){
         return ResponseEntity.ok(postService.getAllPostsByUsername(username));
     }
@@ -43,7 +47,7 @@ public class PostController {
         return ResponseEntity.ok(postService.getAllPostsByForumId(id));
     }
     @GetMapping("/by-Forum-name/{name}")
-    public ResponseEntity <List<PostResponse>> getAllPostsByForumName(@PathVariable String name){
+    public ResponseEntity <List<PostResponse>> getAllPostsByForumName(@PathVariable String name) {
         return ResponseEntity.ok(postService.getAllPostsByForumName(name));
     }
 }

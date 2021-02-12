@@ -15,4 +15,7 @@ public class ForumDto {
     private String description;
     private Integer numberOfPosts;
     private Integer numberOfUsers;
+    private String duration;
+    private String userName;
+    private boolean isPrivate;
 }

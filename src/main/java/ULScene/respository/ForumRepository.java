@@ -16,5 +16,6 @@ public interface ForumRepository extends JpaRepository<Forum,Long> {
     Optional<Forum> findById (Long id);
     Optional<Forum> findByUser (User user);
     Optional<Forum> deleteById (long Id);
+    Boolean existsByName(String name);
 
 }

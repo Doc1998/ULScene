@@ -1,6 +1,7 @@
 package ULScene.service;
 
 import ULScene.dto.CommentDto;
+import ULScene.dto.CommentResponse;
 import ULScene.exceptions.PostNotFoundException;
 import ULScene.exceptions.ULSceneException;
 import ULScene.mapper.CommentMapper;
@@ -41,14 +42,22 @@ public class CommentService {
     public void sendCommentNotification(String message, User user){
         mailService.sendMail(new NotificationEmail(user.getUsername()+ "Commented on your post", user.getEmail(),message ));
     }
-    public List<CommentDto> getAllCommentsForPost(Long postId){
+    public List<CommentResponse> getAllCommentsForPost(Long postId){
         Post post = postRepository.findById(postId)
                 .orElseThrow(()-> new PostNotFoundException("Not found"));
         return commentRepository.findByPost(post).stream().map(commentMapper::mapToDto).collect(Collectors.toList());
     }
-    public List<CommentDto> getAllCommentsForUser(String username){
+    public List<CommentResponse> getAllCommentsForUser(String username){
         User user = userRepository.findByUsername(username)
                 .orElseThrow(()-> new UsernameNotFoundException("Not found"));
         return commentRepository.findAllByUser(user).stream().map(commentMapper::mapToDto).collect(Collectors.toList());
+    }
+    public List<CommentResponse> getAllCommentsForCurrentUser(){
+        User user = authService.getCurrentUser();
+        return commentRepository.findAllByUser(user).stream().map(commentMapper::mapToDto).collect(Collectors.toList());
+    }
+    public CommentResponse getCommentById(Long id){
+        Comment comment = commentRepository.findById(id).orElseThrow(() -> new ULSceneException("Not found"));
+        return commentMapper.mapToDto(comment);
     }
 }

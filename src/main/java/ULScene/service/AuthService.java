@@ -5,10 +5,10 @@ import ULScene.dto.LoginResponse;
 import ULScene.dto.RefreshTokenRequest;
 import ULScene.dto.RegisterRequest;
 import ULScene.exceptions.ULSceneException;
-import ULScene.model.NotificationEmail;
-import ULScene.model.User;
-import ULScene.model.VerificationToken;
+import ULScene.model.*;
+import ULScene.respository.RoleRepository;
 import ULScene.respository.UserRepository;
+import ULScene.respository.UserRolesRepository;
 import ULScene.respository.VerificationTokenRepository;
 import ULScene.security.JwtProvider;
 import lombok.AllArgsConstructor;
@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.management.relation.Role;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,6 +41,8 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final VerificationTokenRepository verificationTokenRepository;
     private final RefreshTokenService refreshTokenService;
+    private final UserRolesRepository userRolesRepository;
+    private final RoleRepository roleRepository;
 
 
     public void signup(RegisterRequest registerRequest) {
@@ -49,10 +52,14 @@ public class AuthService {
         user.setEmail (registerRequest.getEmail());
         user.setCreateDate(Instant.now());
         user.setEnabled(false);
-
         userRepository.save(user);
         String token = generateToken(user);
         mailService.sendMail(new NotificationEmail("Please activiate your account", user.getEmail(), "Click here to activiate account : " + "http://localhost:8080/api/auth/accountVerification/" + token));
+        Roles role = roleRepository.findById(Long.valueOf(1)).orElseThrow(()-> new ULSceneException("No role found"));
+        UserRoles userRoles = new UserRoles();
+        userRoles.setUser(user);
+        userRoles.setRole(role);
+        userRolesRepository.save(userRoles);
     }
     @Transactional
     public void fetchUserAndEnable(VerificationToken verificationToken) {

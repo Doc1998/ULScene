@@ -2,6 +2,8 @@ package ULScene.controller;
 
 import ULScene.dto.ForumDto;
 import ULScene.dto.JoinForumRequest;
+import ULScene.dto.ModeratorRequest;
+import ULScene.model.Forum;
 import ULScene.service.ForumService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,13 +32,32 @@ public class ForumController {
     public ResponseEntity getAllForumsByPopularity(){
         return ResponseEntity.status(HttpStatus.OK).body(forumService.getAllByPopular());
     }
+    @GetMapping("/mostActive")
+    public ResponseEntity getAllForumsByActivity(){
+        return ResponseEntity.status(HttpStatus.OK).body(forumService.getAllByActive());
+    }
 
-    @GetMapping("/users/{name}")
+    @GetMapping("/{name}/users")
     public ResponseEntity getAllMembers(@PathVariable String name){return ResponseEntity.status(HttpStatus.OK).body(forumService.getForumMembers(name));}
+
+    @GetMapping("/{name}/mods")
+    public ResponseEntity getAllModerators(@PathVariable String name){return ResponseEntity.status(HttpStatus.OK).body(forumService.getForumModerators(name));}
 
     @GetMapping("/{id}")
     public ResponseEntity getForum(@PathVariable Long id){
         return ResponseEntity.status(HttpStatus.OK).body(forumService.getForum(id));
+    }
+    @GetMapping("/checkMembership/{name}")
+    public ResponseEntity checkMembership(@PathVariable String name){
+        return ResponseEntity.status(HttpStatus.OK).body(forumService.isForumMember(name));
+    }
+    @GetMapping("/checkModerator/{name}")
+    public ResponseEntity checkModerator(@PathVariable String name){
+        return ResponseEntity.status(HttpStatus.OK).body(forumService.isForumModerator(name));
+    }
+    @GetMapping("/by-name/{name}")
+    public ResponseEntity getForum(@PathVariable String name){
+        return ResponseEntity.status(HttpStatus.OK).body(forumService.getForumByName(name));
     }
     @PostMapping("/delete/{id}")
     public ResponseEntity deleteForum(@PathVariable Long id){
@@ -44,6 +65,16 @@ public class ForumController {
     }
     @PostMapping("/join")
     public ResponseEntity joinForum(@RequestBody JoinForumRequest joinForumRequest){
-        return ResponseEntity.status(HttpStatus.OK).body(forumService.joinForum(joinForumRequest));
+        forumService.joinForum(joinForumRequest);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+    @PostMapping("/leave")
+    public ResponseEntity leaveForum(@RequestBody JoinForumRequest joinForumRequest){
+        forumService.leaveForum(joinForumRequest);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+    @PostMapping("/{name}/addMod")
+    public ResponseEntity addModToForum(@RequestBody ModeratorRequest moderatorRequest){
+        return ResponseEntity.status(HttpStatus.OK).body(forumService.AddModerator(moderatorRequest));
     }
 }

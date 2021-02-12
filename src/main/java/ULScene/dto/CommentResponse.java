@@ -7,21 +7,13 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostResponse {
+public class CommentResponse {
     private Long id;
     private String postName;
-    private String url;
-    private String description;
+    private String text;
     private String userName;
-    private String forumName;
     private Integer voteCount;
-    private Integer commentCount;
     private String duration;
     private boolean upVote;
     private boolean downVote;
-    /*
-        duration will be using the github timeago library
-        2 kotlin dependencies needed,1 kotlin plugin
-        plus the dep for the github lib
-     */
 }

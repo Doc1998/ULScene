@@ -11,12 +11,15 @@ import ULScene.model.User;
 import ULScene.respository.ForumRepository;
 import ULScene.respository.PostRepository;
 import ULScene.respository.UserRepository;
+import com.github.marlonlom.utilities.timeago.TimeAgo;
+import javafx.geometry.Pos;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -36,6 +39,9 @@ public class PostService {
         Forum forum = forumRepository.findByName(postRequest.getForumName())
                 .orElseThrow(() -> new ForumNotFoundException(postRequest.getForumName()));
         postRepository.save(postMapper.map(postRequest,forum,authService.getCurrentUser()));
+        List<Post> postList = postRepository.findAllByForum(forum);
+        forum.setPosts(postList);
+        forumRepository.save(forum);
 
     }
     @Transactional (readOnly = true)
@@ -78,6 +84,32 @@ public class PostService {
         List <Post> postList = postRepository.findAllByUser(user);
         return postList.stream().map(postMapper::mapToDto)
                 .collect(Collectors.toList());
+    }
+    @Transactional(readOnly = true)
+    public List<PostResponse> getAllPostsByCurrentUser (){
+        User user = authService.getCurrentUser();
+        List <Post> postList = postRepository.findAllByUser(user);
+        return postList.stream().map(postMapper::mapToDto)
+                .collect(Collectors.toList());
+    }
+    public int getUserLogos(){
+        User user = authService.getCurrentUser();
+        return user.getLogos();
+    }
+    public int getUsersLogos(String username){
+        User user = userRepository.findByUsername(username).orElseThrow(()-> new ULSceneException("Not found"));
+        return user.getLogos();
+    }
+    @Transactional(readOnly = true)
+    public String getUserCreatedDate(){
+        User user = authService.getCurrentUser();
+        return TimeAgo.using(user.getCreateDate().toEpochMilli());
+    }
+    @Transactional(readOnly = true)
+    public String getUsersCreatedDate(String username){
+        User user = userRepository.findByUsername(username).orElseThrow(()-> new ULSceneException("Not found"));
+        String time = TimeAgo.using(user.getCreateDate().toEpochMilli());
+        return time;
     }
 
 }

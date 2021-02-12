@@ -18,6 +18,7 @@ public class Comment {
     private Long id;
     @NotEmpty
     private String text;
+    private Integer voteCount = 0;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "postId",referencedColumnName = "postId")
     private Post post;
