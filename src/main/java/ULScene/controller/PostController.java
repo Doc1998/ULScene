@@ -21,6 +21,12 @@ public class PostController {
         postService.save(postRequest);
         return new ResponseEntity(HttpStatus.CREATED);
     }
+    @PostMapping("/delete")
+    public ResponseEntity deletePost(@RequestBody Long id) {
+        postService.deletePost(id);
+        return new ResponseEntity(HttpStatus.OK);
+    }
+
     @GetMapping("/")
     public ResponseEntity <List<PostResponse>> getAllPosts(){
        return ResponseEntity.ok(postService.getAllPosts());
@@ -49,5 +55,13 @@ public class PostController {
     @GetMapping("/by-Forum-name/{name}")
     public ResponseEntity <List<PostResponse>> getAllPostsByForumName(@PathVariable String name) {
         return ResponseEntity.ok(postService.getAllPostsByForumName(name));
+    }
+    @GetMapping("by-Forum-name/{name}/mostPopular")
+    public ResponseEntity <List<PostResponse>> getAllPostsByPopularity(@PathVariable String name){
+        return ResponseEntity.status(HttpStatus.OK).body(postService.getPostsByPopular(name));
+    }
+    @GetMapping("by-Forum-name/{name}/bestOfWeek")
+    public ResponseEntity <List<PostResponse>> getBestPostsOfWeek(@PathVariable String name){
+        return ResponseEntity.status(HttpStatus.OK).body(postService.getPostsByPopular(name));
     }
 }

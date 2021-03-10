@@ -113,6 +113,10 @@ public class AuthController {
     public ResponseEntity<User> getCurrentUser(){
         return ResponseEntity.ok(authService.getCurrentUser());
     }
+    @GetMapping("/currentUsername")
+    public ResponseEntity<String> getCurrentUsername(){
+        return ResponseEntity.ok(authService.getCurrentUsername());
+    }
     @PostMapping("/refresh/token")
     public LoginResponse refreshTokens(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
         return authService.refreshToken(refreshTokenRequest);

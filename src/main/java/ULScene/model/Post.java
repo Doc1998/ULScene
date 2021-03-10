@@ -35,6 +35,6 @@ public class Post {
     private User user;
     private Instant createdDate;
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "id", referencedColumnName = "id")
+    @JoinColumn(name = "ForumId", referencedColumnName = "id")
     private Forum forum;
 }

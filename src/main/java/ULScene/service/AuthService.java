@@ -94,6 +94,13 @@ public class AuthService {
         return userRepository.findByUsername(principal.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User name not found - " + principal.getUsername()));
     }
+    @Transactional(readOnly = true)
+    public String getCurrentUsername() {
+        org.springframework.security.core.userdetails.User principal = (org.springframework.security.core.userdetails.User) SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal();
+        return principal.getUsername();
+    }
+
     public LoginResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
         refreshTokenService.validateRefreshToken(refreshTokenRequest.getRefreshToken());
         String token = jwtProvider.createTokenWithUsername(refreshTokenRequest.getUsername());

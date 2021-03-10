@@ -12,15 +12,14 @@ import ULScene.model.Post;
 import ULScene.model.User;
 import ULScene.model.UserRoles;
 import ULScene.respository.*;
+import com.sun.org.apache.xpath.internal.operations.Mod;
+import javafx.geometry.Pos;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,10 +29,12 @@ public class ForumService {
     private final ForumRepository forumRepository;
     private final ForumMapper forumMapper;
     private final AuthService authService;
+    private final PostService postService;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRolesRepository userRolesRepository;
+    private final VoteRepository voteRepository;
 
     @Transactional
     public ForumDto save(ForumDto forumDto){
@@ -42,6 +43,7 @@ public class ForumService {
             if(forumDto.isPrivate()){
                 save.setPrivate(true);
             }
+            save.setBackground(forumDto.getBackground());
             forumDto.setId(save.getId());
         }
         return forumDto;
@@ -97,10 +99,26 @@ public class ForumService {
         }
         return false;
     }
+    public boolean isBanned(String name){
+        Forum forum = forumRepository.findByName(name).orElseThrow(() -> new ULSceneException("Forum not found"));
+        List<User> users = forum.getBannedUsers();
+        if(users.contains(authService.getCurrentUser())){
+            return true;
+        }
+        return false;
+    }
     public boolean isForumModerator(String name){
         Forum forum = forumRepository.findByName(name).orElseThrow(() -> new ULSceneException("Forum not found"));
         List<User> users = forum.getModerators();
         if(users.contains(authService.getCurrentUser())){
+            return true;
+        }
+        return false;
+    }
+    public boolean checkAdmin(){
+        User user = authService.getCurrentUser();
+        UserRoles userRole = userRolesRepository.findByUser(user).orElseThrow(()->new ULSceneException("No role found"));
+        if(userRole.getRole().getId() == 2){
             return true;
         }
         return false;
@@ -116,6 +134,38 @@ public class ForumService {
         forumRepository.save(forum);
         return joinForumRequest.getForumName();
     }
+    public int banUser(ModeratorRequest moderatorRequest) {
+        User userBeingAdded = userRepository.findByUsername(moderatorRequest.getUsernameBeingAdded()).orElseThrow(() -> new ULSceneException("User not found"));
+        User userAdding = authService.getCurrentUser();
+        Forum forum = forumRepository.findByName(moderatorRequest.getForumName()).orElseThrow(() -> new ForumNotFoundException("Forum not found"));
+        List<User> banned = forum.getBannedUsers();
+        List<User> users = forum.getUsers();
+        UserRoles userRole = userRolesRepository.findByUser(userAdding).orElseThrow(() -> new ULSceneException("Not found"));
+        UserRoles bannedRole = userRolesRepository.findByUser(userBeingAdded).orElseThrow(() -> new ULSceneException("Not found"));
+        boolean exists = false;
+        List<User> currentMods = forum.getModerators();
+        if (currentMods.contains(userAdding) || forum.getUser() == userAdding || userRole.getRole().getId() == 2) {
+            for (int i = 0; i < banned.size(); i++) {
+                if (banned.get(i) == userBeingAdded) {
+                    exists = true;
+                }
+            }
+            if(!exists) {
+                if(users.contains(userBeingAdded)){
+                    users.remove(userBeingAdded);
+                    forum.setUsers(users);
+                }
+                if(userBeingAdded != forum.getUser() && bannedRole.getRole().getId() != 2){
+                    banned.add(userBeingAdded);
+                    forum.setBannedUsers(banned);
+                    forumRepository.save(forum);
+                    return 1;
+                }
+            }
+        }
+        return 0;
+    }
+
     public String leaveForum(JoinForumRequest joinForumRequest){
         Forum forum = forumRepository.findByName(joinForumRequest.getForumName()).orElseThrow(()-> new ULSceneException("Forum not found"));
         User user = userRepository.findByUsername(joinForumRequest.getUsername()).orElseThrow(()-> new ULSceneException("User not found"));
@@ -128,7 +178,6 @@ public class ForumService {
         return joinForumRequest.getForumName();
     }
 
-
     public ForumDto getForum(Long id) {
         Forum forum = forumRepository.findById(id).orElseThrow(() -> new ULSceneException("Forum not found"));
         return forumMapper.mapForumToDto(forum);
@@ -140,7 +189,7 @@ public class ForumService {
     @Transactional
     public int AddModerator(ModeratorRequest moderatorRequest){
         User userBeingAdded = userRepository.findByUsername(moderatorRequest.getUsernameBeingAdded()).orElseThrow(()-> new ULSceneException("User not found"));
-        User userAdding = userRepository.findByUsername(moderatorRequest.getUsernameAdding()).orElseThrow(()-> new ULSceneException("User not found"));
+        User userAdding = authService.getCurrentUser();
         Forum forum = forumRepository.findByName(moderatorRequest.getForumName()).orElseThrow(()-> new ForumNotFoundException("Forum not found"));
         List<User> members = forum.getUsers();
         UserRoles userRole = userRolesRepository.findByUser(userAdding).orElseThrow(()-> new ULSceneException("Not found"));
@@ -168,6 +217,28 @@ public class ForumService {
         return 0;
     }
     @Transactional
+    public int RemoveModerator(ModeratorRequest moderatorRequest){
+        User userBeingRemoved = userRepository.findByUsername(moderatorRequest.getUsernameBeingAdded()).orElseThrow(()-> new ULSceneException("User not found"));
+        User userRemoving = authService.getCurrentUser();
+        Forum forum = forumRepository.findByName(moderatorRequest.getForumName()).orElseThrow(()-> new ForumNotFoundException("Forum not found"));
+        List<User> members = forum.getUsers();
+        UserRoles userRole = userRolesRepository.findByUser(userRemoving).orElseThrow(()-> new ULSceneException("Not found"));
+        boolean exists = false;
+        List<User> currentMods = forum.getModerators();
+        if(currentMods.contains(userRemoving) || forum.getUser() == userRemoving || userRole.getRole().getId() == 2){
+
+                if (currentMods.contains(userBeingRemoved)) {
+                    currentMods.remove(userBeingRemoved);
+                }
+
+                forum.setModerators(currentMods);
+                forumRepository.save(forum);
+                return 1;
+            }
+             return 0;
+        }
+
+    @Transactional
     public Long deleteForum(Long id){
         Forum forum = forumRepository.findById(id).orElseThrow(()-> new ULSceneException("Not found"));
         List<Post> forumPosts = postRepository.findAllByForum(forum);
@@ -175,17 +246,16 @@ public class ForumService {
         if(forumPosts.size() > 0){
             for(int i =0; i < forumPosts.size();){
                 System.out.println("here1");
-                if(commentRepository.findByPost(forumPosts.get(i)).size() > 0){
-                    for(int k = 0;k < commentRepository.findByPost(forumPosts.get(i)).size();) {
-                        commentRepository.deleteByPost(forumPosts.get(i));
-                        System.out.println("here2");
-                        k++;
-                    }
+                    voteRepository.deleteAllByPost(forumPosts.get(i));
+                    postService.deletePost(forumPosts.get(i).getPostId());
                     i++;
-                }
-                postRepository.deleteByForum(forum);
-                System.out.println("here 3 ");
+                System.out.println("Done");
             }
+        }
+        if(forum.getModerators().size() > 0 ){
+            List<User> emptyList = new ArrayList<User>();
+            forum.setModerators(emptyList);
+            forum.setUsers(emptyList);
         }
         forumRepository.deleteById(id);
         return id;

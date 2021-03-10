@@ -18,4 +18,5 @@ public interface ForumRepository extends JpaRepository<Forum,Long> {
     Optional<Forum> deleteById (long Id);
     Boolean existsByName(String name);
 
+
 }

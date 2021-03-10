@@ -51,16 +51,24 @@ public class ForumController {
     public ResponseEntity checkMembership(@PathVariable String name){
         return ResponseEntity.status(HttpStatus.OK).body(forumService.isForumMember(name));
     }
+    @GetMapping("/checkBanned/{name}")
+    public ResponseEntity checkBanned(@PathVariable String name){
+        return ResponseEntity.status(HttpStatus.OK).body(forumService.isBanned(name));
+    }
     @GetMapping("/checkModerator/{name}")
     public ResponseEntity checkModerator(@PathVariable String name){
         return ResponseEntity.status(HttpStatus.OK).body(forumService.isForumModerator(name));
+    }
+    @GetMapping("/checkAdmin")
+    public ResponseEntity checkAdmin(){
+        return ResponseEntity.status(HttpStatus.OK).body(forumService.checkAdmin());
     }
     @GetMapping("/by-name/{name}")
     public ResponseEntity getForum(@PathVariable String name){
         return ResponseEntity.status(HttpStatus.OK).body(forumService.getForumByName(name));
     }
-    @PostMapping("/delete/{id}")
-    public ResponseEntity deleteForum(@PathVariable Long id){
+    @PostMapping("/delete")
+    public ResponseEntity deleteForum(@RequestBody Long id){
         return ResponseEntity.status(HttpStatus.OK).body(forumService.deleteForum(id));
     }
     @PostMapping("/join")
@@ -76,5 +84,13 @@ public class ForumController {
     @PostMapping("/{name}/addMod")
     public ResponseEntity addModToForum(@RequestBody ModeratorRequest moderatorRequest){
         return ResponseEntity.status(HttpStatus.OK).body(forumService.AddModerator(moderatorRequest));
+    }
+    @PostMapping("/{name}/ban")
+    public ResponseEntity banUserFromForum(@RequestBody ModeratorRequest moderatorRequest){
+        return ResponseEntity.status(HttpStatus.OK).body(forumService.banUser(moderatorRequest));
+    }
+    @PostMapping("/{name}/removeMod")
+    public ResponseEntity RemoveModToForum(@RequestBody ModeratorRequest moderatorRequest){
+        return ResponseEntity.status(HttpStatus.OK).body(forumService.RemoveModerator(moderatorRequest));
     }
 }

@@ -26,6 +26,7 @@ public class Forum {
     private String name;
     @NotBlank(message = "Description is required")
     private String description;
+    private String background;
     @OneToMany(fetch = LAZY)
     private List<Post> posts;
     @ManyToMany(fetch = LAZY)
@@ -33,6 +34,9 @@ public class Forum {
     @ManyToMany(fetch = LAZY)
     @Column(name = "members")
     private List<User> users;
+    @ManyToMany(fetch = LAZY)
+    @Column(name = "bannedUsers")
+    private List<User> bannedUsers;
     private Instant createdDate;
     @ManyToOne(fetch = LAZY)
     private User user;

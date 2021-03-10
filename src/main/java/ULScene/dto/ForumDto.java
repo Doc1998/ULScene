@@ -18,4 +18,5 @@ public class ForumDto {
     private String duration;
     private String userName;
     private boolean isPrivate;
+    private String background;
 }
