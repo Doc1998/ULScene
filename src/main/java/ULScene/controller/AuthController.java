@@ -88,26 +88,26 @@ public class AuthController {
     }
     @PostMapping("/login")
     public LoginResponse createAuthenticationToken(@RequestBody LoginRequest authenticationRequest) throws Exception {
-        try {
-            Authentication authenticate = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword()));
-            SecurityContextHolder.getContext().setAuthentication(authenticate);
-        }
-        catch (BadCredentialsException e){
-            throw new Exception("Incorrect username or password");
-        }
-        final UserDetails userDetails = userDetailsService
-                .loadUserByUsername(authenticationRequest.getUsername());
-        final String jwt = jwtTokenUtil.generateToken(userDetails);
-        //final String username = jwtTokenUtil.
-        //return ResponseEntity.ok(new AuthenticationResponse(jwt));
-        return LoginResponse.builder()
-                .jwt(jwt)
-                .username(authenticationRequest.getUsername())
-                .expiresAt(Instant.now().plusMillis(jwtTokenUtil.getJwtExpirationinMillis()))
-                .refreshToken(refreshTokenService.generateRefreshToken().getToken())
-                .build();
-        //.refreshToken(refreshTokenService.generateRefreshToken().getToken())
+            try {
+                Authentication authenticate = authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword()));
+                SecurityContextHolder.getContext().setAuthentication(authenticate);
+            } catch (BadCredentialsException e) {
+                throw new Exception("Incorrect username or password");
+            }
+            final UserDetails userDetails = userDetailsService
+                    .loadUserByUsername(authenticationRequest.getUsername());
+            final String jwt = jwtTokenUtil.generateToken(userDetails);
+            //final String username = jwtTokenUtil.
+            //return ResponseEntity.ok(new AuthenticationResponse(jwt));
+            return LoginResponse.builder()
+                    .jwt(jwt)
+                    .username(authenticationRequest.getUsername())
+                    .expiresAt(Instant.now().plusMillis(jwtTokenUtil.getJwtExpirationinMillis()))
+                    .refreshToken(refreshTokenService.generateRefreshToken().getToken())
+                    .build();
+            //.refreshToken(refreshTokenService.generateRefreshToken().getToken())
+
     }
     @GetMapping("/currentUser")
     public ResponseEntity<User> getCurrentUser(){
@@ -126,8 +126,30 @@ public class AuthController {
         refreshTokenService.deleteRefreshToken(refreshTokenRequest.getRefreshToken());
         return ResponseEntity.status(HttpStatus.OK).body("Refresh token deleted successfully");
     }
-
-
+    @PostMapping("/banUser")
+    public ResponseEntity banUser(@RequestBody String username){
+        return ResponseEntity.status(HttpStatus.OK).body(authService.banUserByName(username));
+    }
+    @PostMapping("/unBanUser")
+    public ResponseEntity unBanUser(@RequestBody String username){
+        return ResponseEntity.status(HttpStatus.OK).body(authService.unBanUser(username));
+    }
+    @GetMapping("/checkBanned/{name}")
+    public ResponseEntity<Boolean> checkBanned(@PathVariable String name){
+        return ResponseEntity.status(HttpStatus.OK).body(authService.isBanned(name));
+    }
+    @GetMapping("/checkBanned")
+    public ResponseEntity<Boolean> checkBanned(){
+        return ResponseEntity.status(HttpStatus.OK).body(authService.isCurrentUserBanned());
+    }
+    @PostMapping("/addAdmin")
+    public ResponseEntity makeAdmin(@RequestBody String username){
+        return ResponseEntity.status(HttpStatus.OK).body(authService.addAdmin(username));
+    }
+    @PostMapping("/removeAdmin")
+    public ResponseEntity removeAdmin(@RequestBody String username){
+        return ResponseEntity.status(HttpStatus.OK).body(authService.removeAdmin(username));
+    }
 
 }
 

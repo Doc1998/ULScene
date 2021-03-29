@@ -31,5 +31,6 @@ public class User {
     private String email;
     private Instant createDate;
     private boolean enabled;
+    private boolean banned;
     private int logos;
 }

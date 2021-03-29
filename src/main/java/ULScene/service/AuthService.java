@@ -55,10 +55,11 @@ public class AuthService {
         userRepository.save(user);
         String token = generateToken(user);
         mailService.sendMail(new NotificationEmail("Please activiate your account", user.getEmail(), "Click here to activiate account : " + "http://localhost:8080/api/auth/accountVerification/" + token));
-        Roles role = roleRepository.findById(Long.valueOf(1)).orElseThrow(()-> new ULSceneException("No role found"));
+        Roles newUser = new Roles();
+        newUser.setId((long) 1);
         UserRoles userRoles = new UserRoles();
         userRoles.setUser(user);
-        userRoles.setRole(role);
+        userRoles.setRole(newUser);
         userRolesRepository.save(userRoles);
     }
     @Transactional
@@ -87,6 +88,74 @@ public class AuthService {
         verificationTokenRepository.save(verificationToken);
         return token;
     }
+
+    public boolean isBanned(String username){
+        User user = userRepository.findByUsername(username).orElseThrow(()-> new ULSceneException("NF"));
+        if(user.isBanned()){
+            return true;
+        }
+        return false;
+    }
+    public int addAdmin(String username){
+        User user = userRepository.findByUsername(username).orElseThrow(()-> new ULSceneException("NF"));
+        UserRoles userRole = userRolesRepository.findByUser(user).orElseThrow(()->new ULSceneException("No role found"));
+        User admin = getCurrentUser();
+        UserRoles adminRole = userRolesRepository.findByUser(admin).orElseThrow(()->new ULSceneException("No role found"));
+        Roles makeAdmin = new Roles();
+        makeAdmin.setId((long) 2);
+        if(adminRole.getRole().getId() == 2){
+            userRole.setRole(makeAdmin);
+            userRepository.save(user);
+            return 1;
+        }
+        return 0;
+    }
+    public int removeAdmin(String username){
+        User user = userRepository.findByUsername(username).orElseThrow(()-> new ULSceneException("NF"));
+        UserRoles userRole = userRolesRepository.findByUser(user).orElseThrow(()->new ULSceneException("No role found"));
+        User admin = getCurrentUser();
+        Roles makeRegular = new Roles();
+        makeRegular.setId((long) 1);
+        UserRoles adminRole = userRolesRepository.findByUser(admin).orElseThrow(()->new ULSceneException("No role found"));
+        if(adminRole.getRole().getId() == 2){
+            userRole.setRole(makeRegular);
+            userRepository.save(user);
+            return 1;
+        }
+        return 0;
+    }
+    public boolean isCurrentUserBanned(){
+        User user = getCurrentUser();
+        if(user.isBanned()){
+            return true;
+        }
+        return false;
+    }
+    @Transactional
+    public int banUserByName(String username) {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new ULSceneException("NF"));
+        User admin = getCurrentUser();
+        UserRoles userRole = userRolesRepository.findByUser(admin).orElseThrow(()->new ULSceneException("No role found"));
+        if(userRole.getRole().getId() == 2){
+            user.setBanned(true);
+            userRepository.save(user);
+            return 1;
+        }
+        return 0;
+    }
+    @Transactional
+    public int unBanUser(String username) {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new ULSceneException("NF"));
+        User admin = getCurrentUser();
+        UserRoles userRole = userRolesRepository.findByUser(admin).orElseThrow(()->new ULSceneException("No role found"));
+        if(userRole.getRole().getId() == 2){
+            user.setBanned(false);
+            userRepository.save(user);
+            return 1;
+        }
+        return 0;
+    }
+
     @Transactional(readOnly = true)
     public User getCurrentUser() {
         org.springframework.security.core.userdetails.User principal = (org.springframework.security.core.userdetails.User) SecurityContextHolder.
